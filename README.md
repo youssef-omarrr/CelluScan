@@ -6,6 +6,29 @@ CelluScan is a custom Vision Transformer (ViT)–based pipeline for classifying 
 
 ---
 
+### Repository Structure
+
+```
+CelluScan/
+├── Blood cells datasets/        # Folders of all classes (with one image as an example)
+│
+├── Extra info/                  # Supplementary research and technical notes
+│   ├── MultiHead_Self_Attention.md   # Notes on attention mechanisms
+│   └── Researches.md                # Literature and research summaries on the blood cells
+│
+├── Outputs/                     # Model outputs, confusion matrices, and logs
+│   ├── Cmatrix_after_7_EPOCHS.png         # Confusion matrix after 7 epochs
+│   ├── Cmatrix_after_another_5_EPOCHS.png # Confusion matrix after additional epochs
+│   ├── losses_after_7_EPOCHS.png          # Loss curves after 7 epochs
+│   └── losses_after_another_5_EPOCHS.png  # Loss curves after additional epochs
+│
+├── AN IMAGE IS WORTH 16X16.pdf  # Reference paper on Vision Transformers
+├── CelluScan.ipynb              # Main Jupyter notebook for model training and evaluation
+└── final_fine_tuning.ipynb      # Notebook for final model fine-tuning
+```
+
+---
+
 ### Table of Contents
 
 1. [Overview](#overview)
@@ -21,6 +44,8 @@ CelluScan is a custom Vision Transformer (ViT)–based pipeline for classifying 
 
 * **Goal**: Classify 14 WBC categories (e.g., Neutrophils, Lymphocytes) and identify developmental stages (e.g., Promyelocyte, Myelocyte).
 * **Approach**: Transfer learning using PyTorch’s pretrained ViT-B/16, extended with custom classification heads and attention modules. Scratch training remains available but is resource-intensive.
+
+> **Note:** On the [Hugging Face website](https://huggingface.co/spaces/Youssef-omarr/CelluScan), you can also view potential diagnoses and interesting facts about each cell type alongside the model predictions.
 
 ## Dataset & Preprocessing
 
