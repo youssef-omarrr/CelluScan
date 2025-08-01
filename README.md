@@ -6,7 +6,7 @@ CelluScan is a custom Vision Transformer (ViT)–based pipeline for classifying 
 
 ---
 
-### Repository Structure
+## Repository Structure
 
 ```
 CelluScan/
@@ -29,7 +29,7 @@ CelluScan/
 
 ---
 
-### Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Dataset & Preprocessing](#dataset--preprocessing)
@@ -47,12 +47,45 @@ CelluScan/
 
 > **Note:** On the [Hugging Face website](https://huggingface.co/spaces/Youssef-omarr/CelluScan), you can also view potential diagnoses and interesting facts about each cell type alongside the model predictions.
 
-## Dataset & Preprocessing
+Thanks for the clarification. Since the \~60,000 images are **after** duplicate removal and class balancing (via augmentation), here's an accurate and cleaned-up version of the section reflecting the correct order of processing:
 
-* **Total**: \~60,000 images across 14 classes.
-* **Initial Distribution**: Ranged from 151 (Immature Granulocyte) to 8,685 (Lymphocyte).
-* **Balancing**: Minority classes augmented with `TrivialAugmentWide` to ≥4,500 images each.
-* **Splits**: 5% (sanity checks), 20% (hyperparameter tuning), 100% (final training).
+---
+
+##  Dataset & Preprocessing
+
+* **Final Dataset Size**: \~60,000 images across **14 blood cell classes**, **after cleaning, deduplication, and class balancing**.
+
+###  Data Cleaning & Verification
+
+Before augmentation and training, the dataset underwent multiple cleaning and validation steps to ensure data quality:
+
+* **Label Correction & Verification**:
+  * Manually reviewed \~500 edge cases, especially among morphologically similar types (e.g., **Promyelocytes**, **Myelocytes**, **Metamyelocytes**, **Band vs. Segmented Neutrophils**).
+  * Consulted a hematologist for relabeling borderline samples and resolving inconsistencies.
+  * Manually added data to their folders and made sure they were correctly labeled.
+
+* **Image Normalization**:
+
+  * All images resized to **224×224**, padded if necessary to maintain aspect ratio.
+  * Normalized using channel-wise mean and standard deviation computed from the cleaned dataset.
+
+
+###  Class Balancing (Post-Cleaning)
+
+After cleaning, the class distribution remained highly imbalanced (e.g., only 151 **Immature Granulocytes** vs. 8,685 **Lymphocytes**). To address this:
+
+* **Balancing Strategy**:
+
+  * Minority classes were augmented using `TrivialAugmentWide` until each class had at least **4,500 samples**.
+  * Majority classes were left unaugmented to preserve their original distribution.
+  * No synthetic duplication — all augmented images were **transformed variants**, not raw copies.
+
+
+###  Dataset Splits
+
+* **5%** — Reserved for **sanity checks**, augmentation validation, and early debugging.
+* **20%** — Used during **hyperparameter tuning** and performance tracking.
+* **100%** — Used for **final training phase**, once architecture and parameters were locked in.
 
 | Class                | Original | Post-Balance |
 | -------------------- | -------: | -----------: |
@@ -71,14 +104,90 @@ CelluScan/
 | Eosinophil           |    7,141 |        7,141 |
 | Lymphocyte           |    8,685 |        8,685 |
 
-## Model Architecture
 
-> **Note:** We leverage PyTorch’s pretrained ViT-B/16 for efficient transfer learning. Custom modules wrap and extend this core model; full-from-scratch training is available if needed.
+--- 
 
-* **Patch Embedding**: 224×224 images → 16×16 patches → 768-dim embeddings.
-* **Transformer Blocks**: 12 layers, 12 heads (64-dim), MLP (2,048-dim, GELU).
-* **Classification**: Learnable \[CLS] token, final MLP head.
-* **Implementation**: Custom PyTorch modules (`PatchEmbedding`, `MultiHeadSelfAttention`, `TransformerBlock`, `ViTClassifier`).
+##  Model Architecture: Vision Transformer (ViT-B/16)
+
+We faithfully re-implemented the Vision Transformer architecture as introduced in [*An Image is Worth 16x16 Words*](https://arxiv.org/abs/2010.11929), ensuring full compatibility with PyTorch’s pretrained ViT-B/16 weights. In particular, we manually implemented the **Multi-Head Self-Attention (MSA)** mechanism based on the original formulation from [*Attention is All You Need*](https://arxiv.org/abs/1706.03762), giving us low-level control over the attention computations. Our modular design also allows **training from scratch** and supports ablation studies or architecture modifications.
+
+> Note: Training a large Vision Transformer from scratch is resource-intensive and time-consuming. While we built the full architecture manually as an educational exercise, for practical purposes, we use PyTorch’s pretrained ViT-B/16 and apply transfer learning due to limited compute resources.
+
+
+
+###  Architecture Overview
+
+| Component               | Details                                                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Input**               | RGB image, resized to `224×224`                                                                             |
+| **Patch Embedding**     | Image split into `16×16` patches → 196 patches → each mapped to `768`-dim vectors                           |
+| **Tokenization**        | Prepend learnable `[CLS]` token → sequence becomes `197×768`                                                |
+| **Positional Encoding** | Learnable 1D embedding added to maintain spatial order                                                      |
+| **Transformer Encoder** | 12 layers, each with:<br>• 12-head self-attention<br>• MLP with 3072 hidden units<br>• LayerNorm, Residuals |
+| **Classification Head** | Output from `[CLS]` token → LayerNorm → Linear layer → 14 output classes                                    |
+
+
+###  Key Architectural Components (Custom-Built)
+
+We re-implemented each module of ViT manually to better understand the internals and to maintain flexibility.
+
+####  Patch Embedding
+
+* Converts the image into non-overlapping patches using a Conv2D layer (kernel=patch\_size, stride=patch\_size).
+* Output flattened into a 1D sequence of shape `(batch_size, num_patches, embedding_dim)`.
+* This replaces the need to manually extract and flatten image patches.
+
+####  \[CLS] Token & Position Embedding
+
+* A learnable `[CLS]` token is prepended to the patch sequence, representing the whole image.
+* Positional embeddings are learnable parameters of shape `(1, 197, 768)` and are added to the input sequence.
+* Helps retain positional context, as transformers are permutation-invariant.
+  
+####  Transformer Encoder Block
+
+Each of the 12 blocks includes:
+
+* **Multi-Head Self-Attention (MHSA)**:
+
+  * Queries, Keys, and Values are projected via linear layers, split into 12 heads.
+  * Attention computed as scaled dot-product, results concatenated and linearly projected.
+* **MLP Block**:
+
+  * 2-layer feedforward network: `Linear(768 → 3072) → GeLU → Dropout → Linear(3072 → 768)`.
+* **Residual Connections & Layer Normalization**:
+
+  * Both attention and MLP blocks are wrapped in `LayerNorm + residual` to stabilize gradients and learning.
+
+####  MLP Classification Head
+
+* Final `[CLS]` token output is normalized via `LayerNorm` and passed through a `Linear(768 → 14)` layer for classification.
+
+
+### Transfer Learning Compatible
+
+While we re-implemented the Vision Transformer architecture primarily for learning purposes, our custom model is **not identical** to `torchvision.models.vit_b_16`, and **cannot load its pretrained weights directly**.
+
+For practical usage, we created an instance of PyTorch’s official `vit_b_16` model, loaded the `DEFAULT` weights, and fine-tuned it using our dataset. This allowed us to take full advantage of pretrained weights without the extreme computational cost of training our custom ViT from scratch — which would have required **significant GPU resources and time**.
+
+> **Note:** The custom implementation remains fully functional and trainable, but was primarily built for architectural understanding, experimentation, and ablation — not for production-scale use.
+
+
+### Summary of Configuration
+
+| Parameter          | Value       |
+| ------------------ | ----------- |
+| Patch Size         | 16×16       |
+| Num Patches        | 196         |
+| Embedding Dim      | 768         |
+| Num Layers (Depth) | 12          |
+| Num Heads          | 12          |
+| MLP Hidden Dim     | 3072        |
+| Dropout            | 0.1         |
+| Input Size         | 224×224 RGB |
+| Output Classes     | 14          |
+
+---
+
 
 ## Training Procedure
 
@@ -86,24 +195,69 @@ CelluScan/
 
    * 5% (\~3K images, 5 epochs)
    * 20% (\~12K images, 7 epochs)
-   * 100% (\~60K images, 7 epochs)
+   * 100% (\~60K images, 7 + 5 epochs)
 2. **Optimizer**: `torch.optim.AdamW(vit.parameters(), lr=3e-4, weight_decay=1e-2)`
 3. **Loss**: `torch.nn.CrossEntropyLoss()`
 4. **Metrics**: `torchmetrics.Accuracy(task="multiclass", num_classes=14)`
 
+---
 
 ## Results & Discussion
 
 ![alt text](Outputs/Cmatrix_after_another_5_EPOCHS.png)
 
 * **Overall Test Accuracy**: 88.93% on full dataset.
-* **Class-wise Challenges**:
 
-  * **Metamyelocytes vs. Myelocytes vs. Promyelocytes**: High visual similarity leads to lower recall (\~75%).
-  * **Band vs. Segmented Neutrophils**: Maturity boundaries are subtle; recall \~78%.
+###  **Class-wise Challenges & Biological Overlap**
+
+#### > **Metamyelocytes vs. Myelocytes vs. Promyelocytes**
+  These are all stages of **granulocytic precursor cells** in the process of **myelopoiesis** (formation of granulocytes in bone marrow).
+
+  * **Biological similarity**:
+
+    * All three originate from the **myeloblast** and share similar **cytoplasmic granulation**, **nuclear shape**, and **cell size**.
+    * **Promyelocytes** have large nuclei with prominent nucleoli and azurophilic granules.
+    * **Myelocytes** begin to show specific granules, but the **nucleus is still round or oval**.
+    * **Metamyelocytes** have a **kidney-shaped nucleus**, but this can overlap morphologically with late-stage myelocytes.
+    * These subtle morphological shifts are difficult to pick up even for trained specialists, let alone models.
+  * **Why it's hard for the model**:
+    Visual cues are extremely nuanced; the key distinguishing feature is **nuclear shape**, which can be ambiguous due to staining variations, orientation of cells, or image resolution.
+  * **How doctors differentiate**:
+    Experts rely on **nuclear indentation**, **granule distribution**, and **contextual clues** within the smear. Sometimes they even need **serial sectioning** or **manual review under multiple fields** for reliable classification.
+
+#### > **Band vs. Segmented Neutrophils**
+  These are successive stages in **neutrophil maturation**.
+
+  * **Biological similarity**:
+
+    * Both share identical cytoplasm and granules.
+    * The **only major difference** is in the **nuclear segmentation**:
+
+      * **Bands** have a **non-segmented curved nucleus** (like a U or S shape).
+      * **Segmented neutrophils** have **2-5 distinct nuclear lobes** connected by thin filaments.
+    * However, the boundary between the two is **not discrete** and is more of a **developmental continuum**.
+  * **Why it's hard for the model**:
+    If the image captures the cell in a way that obscures the nucleus or if the segmentation is subtle, the distinction becomes visually blurred.
+  * **How doctors differentiate**:
+    Professionals use a combination of **nuclear shape**, **chromatin pattern**, and **experience-based thresholds** (e.g., how narrow is the filament between lobes) to label them.
+
+#### > **Eosinophils vs. Neutrophils**
+  Though from the same granulocyte lineage, these two are often misclassified due to overlapping features under certain conditions.
+
+  * **Biological similarity**:
+
+    * Both have **bilobed nuclei** and similar cell sizes.
+    * When eosinophilic granules are faint or obscured (due to poor staining or artifacts), eosinophils may resemble neutrophils.
+    * In addition, **toxic granulation** or artifacts in neutrophils can mimic eosinophilic granularity.
+  * **Why it's hard for the model**:
+    The model relies heavily on **granule color and density**, which can vary depending on **slide preparation, lighting, or camera calibration**.
+  * **How doctors differentiate**:
+    Eosinophils have **distinct reddish-orange granules** (acidophilic), whereas neutrophils have **finer, lilac or pinkish granules**. Human experts also take into account **clinical context**, which AI lacks.
+
 
 Despite these challenges, the model demonstrates robust performance for automated screening; further chemical staining data could bolster clinically critical distinctions.
 
+---
 
 ## License
 
