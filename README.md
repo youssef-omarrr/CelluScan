@@ -136,34 +136,33 @@ We faithfully re-implemented the Vision Transformer architecture as introduced i
 
 We re-implemented each module of ViT manually to better understand the internals and to maintain flexibility.
 
-####  Patch Embedding
+####  1. Patch Embedding
 
 * Converts the image into non-overlapping patches using a Conv2D layer (kernel=patch\_size, stride=patch\_size).
 * Output flattened into a 1D sequence of shape `(batch_size, num_patches, embedding_dim)`.
 * This replaces the need to manually extract and flatten image patches.
 
-####  \[CLS] Token & Position Embedding
+####  1.1. \[CLS] Token & Position Embedding
 
 * A learnable `[CLS]` token is prepended to the patch sequence, representing the whole image.
 * Positional embeddings are learnable parameters of shape `(1, 197, 768)` and are added to the input sequence.
 * Helps retain positional context, as transformers are permutation-invariant.
   
-####  Transformer Encoder Block
+####  2. Transformer Encoder Block
 
 Each of the 12 blocks includes:
 
-* **Multi-Head Self-Attention (MHSA)**:
-
+#### 2.1. **Multi-Head Self-Attention (MSA)**:
   * Queries, Keys, and Values are projected via linear layers, split into 12 heads.
   * Attention computed as scaled dot-product, results concatenated and linearly projected.
-* **MLP Block**:
 
+#### 2.2. **MLP Block**:
   * 2-layer feedforward network: `Linear(768 → 3072) → GeLU → Dropout → Linear(3072 → 768)`.
-* **Residual Connections & Layer Normalization**:
 
+#### 2.3. **Residual Connections & Layer Normalization**:
   * Both attention and MLP blocks are wrapped in `LayerNorm + residual` to stabilize gradients and learning.
 
-####  MLP Classification Head
+#### 3. MLP Classification Head
 
 * Final `[CLS]` token output is normalized via `LayerNorm` and passed through a `Linear(768 → 14)` layer for classification.
 
