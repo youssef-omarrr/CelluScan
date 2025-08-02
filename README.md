@@ -60,9 +60,14 @@ Thanks for the clarification. Since the \~60,000 images are **after** duplicate 
 Before augmentation and training, the dataset underwent multiple cleaning and validation steps to ensure data quality:
 
 * **Label Correction & Verification**:
-  * Manually reviewed \~500 edge cases, especially among morphologically similar types (e.g., **Promyelocytes**, **Myelocytes**, **Metamyelocytes**, **Band vs. Segmented Neutrophils**).
-  * Consulted a hematologist for relabeling borderline samples and resolving inconsistencies.
-  * Manually added data to their folders and made sure they were correctly labeled.
+  	1.	Domain Understanding:
+Conducted in-depth research on hematological cell types to gain a solid understanding of class distinctions and data characteristics.
+	2.	Expert Validation:
+Consulted a clinical pathology specialist to confirm the accuracy of class definitions and reinforce the reliability of the dataset.
+	3.	Data Collection:
+Aggregated cell images from multiple open-source datasets to build a diverse and representative dataset.
+	4.	Manual Labeling & Organization:
+Manually reviewed and sorted each image into its corresponding class folder, ensuring consistent labeling. Each class was assigned a unique prefix (e.g., BNE for Band Neutrophils, MMY for Myelocytes, PMY for Promyelocytes) for clarity and traceability.
 
 * **Image Normalization**:
 
