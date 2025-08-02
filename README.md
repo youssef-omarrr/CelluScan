@@ -33,7 +33,7 @@ CelluScan/
 
 1. [Overview](#overview)
 2. [Dataset & Preprocessing](#dataset--preprocessing)
-3. [Model Architecture](#model-architecture)
+3. [Model Architecture](#model-architecture-vision-transformer-vit-b16)
 4. [Training Procedure](#training-procedure)
 5. [Results & Discussion](#results--discussion)
 6. [License](#license)
