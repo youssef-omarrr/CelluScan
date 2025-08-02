@@ -74,6 +74,7 @@ Manually reviewed and sorted each image into its corresponding class folder, ens
   * All images resized to **224×224**, padded if necessary to maintain aspect ratio.
   * Normalized using channel-wise mean and standard deviation computed from the cleaned dataset.
 
+---
 
 ###  Class Balancing (Post-Cleaning)
 
@@ -85,6 +86,7 @@ After cleaning, the class distribution remained highly imbalanced (e.g., only 15
   * Majority classes were left unaugmented to preserve their original distribution.
   * No synthetic duplication — all augmented images were **transformed variants**, not raw copies.
 
+---
 
 ###  Dataset Splits
 
@@ -131,6 +133,7 @@ We faithfully re-implemented the Vision Transformer architecture as introduced i
 | **Transformer Encoder** | 12 layers, each with:<br>• 12-head self-attention<br>• MLP with 3072 hidden units<br>• LayerNorm, Residuals |
 | **Classification Head** | Output from `[CLS]` token → LayerNorm → Linear layer → 14 output classes                                    |
 
+---
 
 ###  Key Architectural Components (Custom-Built)
 
@@ -147,7 +150,9 @@ We re-implemented each module of ViT manually to better understand the internals
 * A learnable `[CLS]` token is prepended to the patch sequence, representing the whole image.
 * Positional embeddings are learnable parameters of shape `(1, 197, 768)` and are added to the input sequence.
 * Helps retain positional context, as transformers are permutation-invariant.
-  
+
+---
+
 ####  2. Transformer Encoder Block
 
 Each of the 12 blocks includes:
@@ -162,10 +167,13 @@ Each of the 12 blocks includes:
 #### 2.3. **Residual Connections & Layer Normalization**:
   * Both attention and MLP blocks are wrapped in `LayerNorm + residual` to stabilize gradients and learning.
 
+---
+
 #### 3. MLP Classification Head
 
 * Final `[CLS]` token output is normalized via `LayerNorm` and passed through a `Linear(768 → 14)` layer for classification.
 
+---
 
 ### Transfer Learning Compatible
 
@@ -212,6 +220,8 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
 
 * **Overall Test Accuracy**: 88.93% on full dataset.
 
+---
+
 ###  **Class-wise Challenges & Biological Overlap**
 
 #### > **Metamyelocytes vs. Myelocytes vs. Promyelocytes**
@@ -224,10 +234,12 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
     * **Myelocytes** begin to show specific granules, but the **nucleus is still round or oval**.
     * **Metamyelocytes** have a **kidney-shaped nucleus**, but this can overlap morphologically with late-stage myelocytes.
     * These subtle morphological shifts are difficult to pick up even for trained specialists, let alone models.
-  * **Why it's hard for the model**:
+  * ❕**Why it's hard for the model**:
     Visual cues are extremely nuanced; the key distinguishing feature is **nuclear shape**, which can be ambiguous due to staining variations, orientation of cells, or image resolution.
-  * **How doctors differentiate**:
+  * ❔**How doctors differentiate**:
     Experts rely on **nuclear indentation**, **granule distribution**, and **contextual clues** within the smear. Sometimes they even need **serial sectioning** or **manual review under multiple fields** for reliable classification.
+
+---
 
 #### > **Band vs. Segmented Neutrophils**
   These are successive stages in **neutrophil maturation**.
@@ -245,6 +257,8 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
   * **How doctors differentiate**:
     Professionals use a combination of **nuclear shape**, **chromatin pattern**, and **experience-based thresholds** (e.g., how narrow is the filament between lobes) to label them.
 
+---
+
 #### > **Eosinophils vs. Neutrophils**
   Though from the same granulocyte lineage, these two are often misclassified due to overlapping features under certain conditions.
 
@@ -258,6 +272,7 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
   * **How doctors differentiate**:
     Eosinophils have **distinct reddish-orange granules** (acidophilic), whereas neutrophils have **finer, lilac or pinkish granules**. Human experts also take into account **clinical context**, which AI lacks.
 
+---
 
 Despite these challenges, the model demonstrates robust performance for automated screening; further chemical staining data could bolster clinically critical distinctions.
 
