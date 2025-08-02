@@ -60,13 +60,13 @@ Thanks for the clarification. Since the \~60,000 images are **after** duplicate 
 Before augmentation and training, the dataset underwent multiple cleaning and validation steps to ensure data quality:
 
 * **Label Correction & Verification**:
-  	1.	Domain Understanding:
+  	1.	**Domain Understanding:**
 Conducted in-depth research on hematological cell types to gain a solid understanding of class distinctions and data characteristics.
-	2.	Expert Validation:
+	2.	**Expert Validation:**
 Consulted a clinical pathology specialist to confirm the accuracy of class definitions and reinforce the reliability of the dataset.
-	3.	Data Collection:
+	3.	**Data Collection:**
 Aggregated cell images from multiple open-source datasets to build a diverse and representative dataset.
-	4.	Manual Labeling & Organization:
+	4.	**Manual Labeling & Organization:**
 Manually reviewed and sorted each image into its corresponding class folder, ensuring consistent labeling. Each class was assigned a unique prefix (e.g., BNE for Band Neutrophils, MMY for Myelocytes, PMY for Promyelocytes) for clarity and traceability.
 
 * **Image Normalization**:
@@ -207,7 +207,7 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
 
    * 5% (\~3K images, 5 epochs)
    * 20% (\~12K images, 7 epochs)
-   * 100% (\~60K images, 7 + 5 epochs)
+   * 100% (\~60K images, 7 + 5 epochs) (which took over 5 hours total to train)
 2. **Optimizer**: `torch.optim.AdamW(vit.parameters(), lr=3e-4, weight_decay=1e-2)`
 3. **Loss**: `torch.nn.CrossEntropyLoss()`
 4. **Metrics**: `torchmetrics.Accuracy(task="multiclass", num_classes=14)`
