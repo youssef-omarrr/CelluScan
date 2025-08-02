@@ -234,9 +234,9 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
     * **Myelocytes** begin to show specific granules, but the **nucleus is still round or oval**.
     * **Metamyelocytes** have a **kidney-shaped nucleus**, but this can overlap morphologically with late-stage myelocytes.
     * These subtle morphological shifts are difficult to pick up even for trained specialists, let alone models.
-  * ❕**Why it's hard for the model**:
+  * ❗️**Why it's hard for the model**:
     Visual cues are extremely nuanced; the key distinguishing feature is **nuclear shape**, which can be ambiguous due to staining variations, orientation of cells, or image resolution.
-  * ❔**How doctors differentiate**:
+  * ❓**How doctors differentiate**:
     Experts rely on **nuclear indentation**, **granule distribution**, and **contextual clues** within the smear. Sometimes they even need **serial sectioning** or **manual review under multiple fields** for reliable classification.
 
 ---
@@ -252,9 +252,9 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
       * **Bands** have a **non-segmented curved nucleus** (like a U or S shape).
       * **Segmented neutrophils** have **2-5 distinct nuclear lobes** connected by thin filaments.
     * However, the boundary between the two is **not discrete** and is more of a **developmental continuum**.
-  * **Why it's hard for the model**:
+  * ❗️**Why it's hard for the model**:
     If the image captures the cell in a way that obscures the nucleus or if the segmentation is subtle, the distinction becomes visually blurred.
-  * **How doctors differentiate**:
+  * ❓**How doctors differentiate**:
     Professionals use a combination of **nuclear shape**, **chromatin pattern**, and **experience-based thresholds** (e.g., how narrow is the filament between lobes) to label them.
 
 ---
@@ -267,9 +267,9 @@ For practical usage, we created an instance of PyTorch’s official `vit_b_16` m
     * Both have **bilobed nuclei** and similar cell sizes.
     * When eosinophilic granules are faint or obscured (due to poor staining or artifacts), eosinophils may resemble neutrophils.
     * In addition, **toxic granulation** or artifacts in neutrophils can mimic eosinophilic granularity.
-  * **Why it's hard for the model**:
+  * ❗️**Why it's hard for the model**:
     The model relies heavily on **granule color and density**, which can vary depending on **slide preparation, lighting, or camera calibration**.
-  * **How doctors differentiate**:
+  * ❓**How doctors differentiate**:
     Eosinophils have **distinct reddish-orange granules** (acidophilic), whereas neutrophils have **finer, lilac or pinkish granules**. Human experts also take into account **clinical context**, which AI lacks.
 
 ---
